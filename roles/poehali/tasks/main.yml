@@ -6,12 +6,6 @@
   pause:
     minutes: 2
 
-#- name: create cfg file
-#  template:
-#    src: haproxy.cfg.j2
-#    dest: "/home/directum/haproxy/haproxy.cfg"
-#    mode: 0777
-
 - name: bash /home/build/do.sh dt deploy --package --init
   shell: bash /home/build/do.sh dt deploy --package --init
 
@@ -21,3 +15,4 @@
 
 - name: import templates
   shell: bash /home/build/do.sh rxcmd import_templates --server="https://"{{ host_fqdn }}"/Integration/odata"
+...

@@ -1,8 +1,8 @@
 ---
 - name: generate SQL
   template:
-    src: changestorage.sql.j2  # потом надо заменить на нормальное что-то
-    dest: /home/build/changestorage.sql  # заменить
+    src: changestorage.sql.j2
+    dest: /home/build/changestorage.sql
     mode: 0777
 
 - name: UpdateStorage
