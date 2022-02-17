@@ -1,0 +1,190 @@
+---
+- name: add debian stretch repo
+  hosts: all
+  become: yes
+
+  tasks:
+
+  - name: install debian-archive-keyring dirmngr
+    apt:
+      name: "debian-archive-keyring"
+      update_cache: yes
+    loop:
+      - dirmngr
+
+  - name: add repo
+    apt_repository:
+      repo: deb https://mirror.yandex.ru/debian/ stretch main contrib non-free
+
+  - name: install components
+    apt:
+      name: "sshpass"
+      update_cache: yes
+    loop:
+    - ca-certificates
+    - curl
+    - software-properties-common
+    - unzip
+
+- name: install postgresql
+  hosts: rx_db
+  become: yes
+
+  roles:
+
+    - role: postgresql-install
+#    - role: postgresql-create-user
+    - role: postgresql-config
+
+  tasks:
+
+  - name: install setfacl support
+    become: yes
+    apt: pkg=acl
+
+  - name: Create User
+    become_user: postgres
+    postgresql_user:
+     name: "{{ admnPostgres }}"
+     password: "{{ PasswordPostgres }}"
+     role_attr_flags: SUPERUSER,LOGIN
+
+- name: install docker and create dir
+  hosts: DRX
+  become: yes
+
+  roles:
+    - role: docker-install
+
+  tasks:
+  - name: Create data_protection folder
+    file:
+      path: "{{ home_path }}/data_protection"
+      state: directory
+
+- name: Config Directum
+  hosts: WEB_APP
+  become: yes
+
+  roles:
+    - role: preparing-to-install
+
+- name: up HaProxy Balancer
+  hosts: balancer
+  become: yes
+
+  roles:
+    - role: haproxy-install
+
+- name: Up all Services
+  hosts: services
+  become: yes
+
+  roles:
+    - role: install-services
+    - role: rabbitmq-install
+
+- name: config storage server
+  hosts: storage
+  become: yes
+
+  roles:
+    - role: preparing-to-install-storage
+
+- name: create and cp data_protection cert to nodes
+  hosts: webapp1
+  become: yes
+
+  roles:
+
+    - role: create-data-protection-cert
+
+- name: Set Version from local builds
+  hosts: DRX
+  become: yes
+
+  tasks:
+
+  - name: Set Version from local builds
+    shell: bash /home/build/do.sh set_version_from_local_builds
+
+- name: up storage
+  hosts: storage
+  become: yes
+
+  tasks:
+
+  - name: up
+    shell: bash /home/build/do.sh all up
+
+- name: up-directum-services
+  hosts: services
+  become: yes
+
+  roles:
+
+  - role: up-directum-services
+
+- name: Create clean db for DirectumRX
+  hosts: webapp1
+  become: yes
+
+  tasks:
+
+  - name: UP DB
+    shell: bash /home/build/do.sh db up
+
+- name: update storage info
+  hosts: rx_db
+  become: yes
+
+  tasks:
+
+  - name: generate SQL
+    template:
+      src: changestorage.sql.j2  # потом надо заменить на нормальное что-то
+      dest: "/home/{{ansible_user}}/changestorage.sql"  # заменить
+      mode: 0777
+
+  - name: UpdateStorage
+    postgresql_query:
+      db: DirectumRX
+      login_host: "{{ groups['rx_db'][0] }}"
+      port: 5432
+      login_user: "{{ admnPostgres }}"
+      login_password: "{{ PasswordPostgres }}"
+      as_single_query: yes
+      path_to_script: /home/{{ansible_user}}/changestorage.sql
+
+- name: up Directum
+  hosts: webapp1
+  become: yes
+
+  roles:
+
+  - role: poehali
+
+- name: start all nodes
+  hosts: DRX
+  become: yes
+
+  tasks:
+
+  - name: start nodes
+    shell: bash /home/build/do.sh all up
+
+  - name: DirectumRX cluster post-install info
+    run_once: true
+    debug:
+      msg:
+        - +------------------------------------------------+
+        - URL to connect "https://{{ host_fqdn }}/Client"
+        - HaProxy balancer {{ cluster_vip }}
+        - WebApp1 {{ groups['webapp1'][0] }}
+        - WebApp2 {{ groups['Webapp2'][0] }}
+        - Postgresql {{ groups['rx_db'][0] }}
+        - Storage {{ haproxy_listen_port.replicas_async }}
+        - Auth.User - Administrator Auth.Password - {{ AuthPassword }}
+        - +------------------------------------------------+
+...
+

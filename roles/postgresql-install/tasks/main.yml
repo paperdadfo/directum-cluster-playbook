@@ -1,0 +1,63 @@
+---
+- name: apt update
+  apt: update_cache=yes cache_valid_time=3600
+
+- name: install
+  apt:
+    name: wget
+    state: latest
+
+- name: apt update
+  apt: update_cache=yes cache_valid_time=3600
+
+- name: backup sources.list
+  copy:
+    src: /etc/apt/sources.list
+    dest: "/home/{{ ansible_user }}/sources.list"
+    remote_src: yes
+
+- name: remove sources.list
+  file:
+    path: /etc/apt/sources.list
+    state: absent
+
+- name: touch sources.list
+  file:
+    path: /etc/apt/sources.list
+    state: touch
+
+- name: add repo
+  apt_repository:
+    repo: deb https://mirror.yandex.ru/debian/ stretch main contrib non-free
+
+- name: Add PostgreSQL APT repository
+#  apt_repository:
+#   repo: deb http://apt.postgresql.org/pub/repos/apt stretch-pgdg main
+  shell: sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ stretch-pgdg main" >> /etc/apt/sources.list'
+
+- name: Add PostgreSQl key
+#  apt_key:
+#   url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+#   state: present
+  shell: wget --no-check-certificate https://www.postgresql.org/media/keys/ACCC4CF8.asc -O - | sudo apt-key add -
+
+#- name: Add PostgreSQL APT repository
+#  apt_repository:
+#   repo: deb http://apt.postgresql.org/pub/repos/apt stretch-pgdg main
+
+- name: apt update
+  apt: update_cache=yes cache_valid_time=5
+
+- name: Install PostgreSQL 13 & contrib
+  apt:
+   name: postgresql-13
+  loop:
+      - "postgresql-contrib"
+
+- name: /etc/apt/sources.list
+  copy:
+    src: "/home/{{ ansible_user }}/sources.list"
+    dest:  /etc/apt/sources.list
+    remote_src: yes
+
+...

@@ -1,0 +1,65 @@
+#
+variables:
+    # Fully qualified domain name. По умолчанию вычисляется как DNS-имя текущей машины.
+    # Для работы по ip можно задать значение
+    host_fqdn: '{{host_fqdn}}'
+    # Домашняя директория, относительно которой хранятся все данные сервисов.
+    # Используется только в конфигурационном файле.
+    home_path: '{{home_path}}'
+    http_port: {{http_port}}
+    https_port: {{https_port}}
+    protocol: '{{protocol}}'
+
+
+builds:
+    platform_builds:
+        version: # auto
+        path: '{{ local_builds_path }}/PlatformBuilds'
+    applied_builds:
+        version: # auto
+        path: '{{ local_builds_path }}/DirectumRX'
+    dbconverter_builds:
+        version: # auto
+        path: '{{ local_builds_path }}/DBConverter'
+    redist_builds:
+        version: # auto
+        path: '{{ local_builds_path }}/Redist'
+logs_path: &logs
+    LOGS_PATH: '{{ home_path }}/logs'
+common_config: &base
+    <<: *logs
+    PRIMARY_TENANT: '{{ tenant }}'
+    CONNECTION_STRING: 'Server={{ groups['rx_db'][0] }}; Database=DirectumRX; User ID={{ admnPostgres }}; Password={{ PasswordPostgres }}; Port=5432; Integrated Security=False; Timeout=30; Encoding=UTF8'
+    QUEUE_CONNECTION_STRING: 'userName={{userRabbit}};password={{userPassword}};hostname={{ groups['services'][0] }};port=5672;virtualhost={{ VHOST }};exchange=RxExchange'
+    DATABASE_ENGINE: 'postgres'
+    DATA_PROTECTION_CERTIFICATE_FILE: '{{ home_path }}/data_protection/cert.pfx'
+    DATA_PROTECTION_CERTIFICATE_FILE_PASSWORD: '11111'
+    WEB_HOST_PATH_BASE: 'Client'
+    AUTHENTICATION_USERNAME: 'Service User'
+    AUTHENTICATION_PASSWORD: '{{ AuthPassword }}'
+    HYPERLINK_SERVER: 'http://{{ host_fqdn }}/Sungero'
+    MONGODB_CONNECTION_STRING: 'mongodb://{{ admnMongo }}:{{ passwordMongo }}@{{ groups['services'][0] }}:27019'
+    LANGUAGE: 'ru-RU'
+    LOG_LANGUAGE: 'ru-RU'
+    ENABLE_SCALING: 'true'
+    REDIS_HOST: '{{ groups['services'][0] }}'
+    REDIS_PORT: '6379'
+
+services_config:
+    StorageService:
+        <<: *base
+        PORT: # auto
+        STORAGE_PATH: '{{ home_path }}/storageservice'
+        ENABLE_SCALING: 'true'
+        REDIS_HOST: '{{ groups['services'][0] }}'
+        REDIS_PORT: '6379'
+    SungeroHaproxy:
+        haproxy_config: '{{ home_path }}/haproxy/haproxy.cfg'
+        http_port: '{{ http_port }}'
+        https_port: '{{ https_port }}'
+    ServiceRunner:
+        <<: *logs
+        CONFIGS_PATH:  # auto
+        PACKAGES_ZIP_PATH: # auto
+        PACKAGES_BIN_PATH: # auto
+        SERVICE_RUNNER_PORT: # auto

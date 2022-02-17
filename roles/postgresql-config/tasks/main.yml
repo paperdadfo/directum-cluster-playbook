@@ -1,0 +1,37 @@
+---
+
+- name: Install python3 and other lib
+  apt:
+   name: python3-pip
+  loop:
+   - "libpq-dev"
+
+- name: Install psycopg2-binary
+  pip:
+   name: psycopg2-binary
+
+- name: Allow all access to port 5432
+  community.general.ufw:
+    rule: allow
+    port: '5432'
+
+- name: refresh pg_hba
+  lineinfile: dest=/etc/postgresql/13/main/pg_hba.conf regexp="^hosts+alls+all+127.0.0.1/32s+md5$" insertafter="^#sIPv4slocal.+" line="host    all             all  0.0.0.0/0             md5"
+
+- name: update postgresql.conf
+  template:
+    src: postgresql13.conf.j2
+    dest: "/etc/postgresql/13/main/postgresql.conf"
+    mode: 0777
+
+- name: start db
+  shell: pg_ctlcluster 13 main start
+
+- name: refresh postgresql.conf
+  lineinfile: dest=/etc/postgresql/13/main/postgresql.conf regexp="^#+Add+settings+for+extensions+here$" insertafter="^#sIPv4slocal.+" line="listen_addresses = '*'"
+
+- name: restart PostgreSQL
+  service:
+    name: postgresql
+    state: restarted
+...

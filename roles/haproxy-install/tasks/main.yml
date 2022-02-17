@@ -1,0 +1,15 @@
+---
+- name: install
+  apt:
+    name: haproxy
+    update_cache: yes
+
+- name: create cfg file
+  template:
+    src: HA.cfg.j2
+    dest: "/etc/haproxy/haproxy.cfg"
+    mode: 0777
+
+- name: HaProxy reset and enabled
+  service: name=haproxy enabled=yes state=restarted
+...

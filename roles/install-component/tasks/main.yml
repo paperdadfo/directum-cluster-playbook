@@ -1,0 +1,11 @@
+---
+- name: install components
+  apt:
+    name: "sshpass"
+    update_cache: yes
+  loop:
+  - ca-certificates
+  - curl
+  - software-properties-common
+  - unzip
+...

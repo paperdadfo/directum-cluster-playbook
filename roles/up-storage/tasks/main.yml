@@ -1,0 +1,17 @@
+---
+- name: generate SQL
+  template:
+    src: changestorage.sql.j2  # потом надо заменить на нормальное что-то
+    dest: /home/build/changestorage.sql  # заменить
+    mode: 0777
+
+- name: UpdateStorage
+  postgresql_query:
+    db: DirectumRX
+    login_host: "{{ groups['webapp1'][0] }}"
+    port: 5432
+    login_user: "{{ admnPostgres }}"
+    login_password: "{{ PasswordPostgres }}"
+    as_single_query: yes
+    path_to_script: /home/build/changestorage.sql
+...

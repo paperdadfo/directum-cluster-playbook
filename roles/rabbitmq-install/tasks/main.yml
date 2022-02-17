@@ -1,0 +1,47 @@
+---
+- name: install services
+  apt:
+    name: "rabbitmq-server"
+    update_cache: yes
+
+- name: up RabbitMQ
+  service:
+    name: rabbitmq-server
+    enabled: yes
+    state: restarted
+
+- name: Create the RabbitMQ user
+  shell: rabbitmqctl add_user {{ userRabbit }} {{ userPassword }}
+  ignore_errors: yes
+
+- name: Create the RabbitMQ admin
+  shell: rabbitmqctl add_user {{ admnRabbit }} {{ admnPassword }}
+  ignore_errors: yes
+
+- name: Add {{ admnRabbit }} to admin
+  shell: rabbitmqctl set_user_tags {{admnRabbit}} administrator
+  ignore_errors: yes
+
+- name: Configure the rabbitmq_user
+  shell: rabbitmqctl set_permissions -p "/" {{ admnRabbit }} ".*" ".*" ".*"
+  ignore_errors: yes
+
+- name: create the VHOST
+  shell: rabbitmqctl add_vhost {{ VHOST }}
+  ignore_errors: yes
+
+- name: Configure the rabbitmq_user
+  shell: rabbitmqctl set_permissions -p "{{ VHOST }}" {{ userRabbit }} ".*" ".*" ".*"
+  ignore_errors: yes
+
+- name: Enable the plugin
+  shell: rabbitmq-plugins enable rabbitmq_management
+  ignore_errors: yes
+
+- name: Restart RabbitMQ
+  service:
+    name: rabbitmq-server
+    enabled: yes
+    state: restarted
+
+...

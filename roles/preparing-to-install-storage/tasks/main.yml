@@ -1,0 +1,18 @@
+---
+- name: mkdir Directum
+  ansible.builtin.file:
+    path: "{{ directum_installer }}"
+    state: directory
+    owner: user
+
+- name: extract Directum
+  ansible.builtin.unarchive:
+    src: "{{ tar_gz_archive }}"
+    dest: "{{ directum_installer }}"
+
+- name: Update ConfigYml
+  template:
+    src: config-storage.j2
+    dest: "/home/build/etc/config.yml"
+    mode: 0777
+...

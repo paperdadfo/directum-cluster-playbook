@@ -1,0 +1,13 @@
+---
+- name: Set Version from local builds
+  shell: bash /home/build/do.sh set_version_from_local_builds
+
+- name: Up mongoDB
+  shell: bash /home/build/do.sh mongodb up
+
+- name: generate data protection cert from config
+  shell: bash /home/build/do.sh generate_data_protection_cert_from_config
+
+- name: Create template DB
+  shell: bash /home/build/do.sh db up
+...

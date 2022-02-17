@@ -1,0 +1,140 @@
+#
+variables:
+    # Fully qualified domain name. По умолчанию вычисляется как DNS-имя текущей машины.
+    # Для работы по ip можно задать значение
+    host_fqdn: '{{host_fqdn}}'
+    # Домашняя директория, относительно которой хранятся все данные сервисов.
+    # Используется только в конфигурационном файле.
+    home_path: '{{home_path}}'
+    http_port: {{http_port}}
+    https_port: {{https_port}}
+    protocol: '{{protocol}}'
+
+
+builds:
+    platform_builds:
+        version: # auto
+        path: '{{ local_builds_path }}/PlatformBuilds'
+    applied_builds:
+        version: # auto
+        path: '{{ local_builds_path }}/DirectumRX'
+    dbconverter_builds:
+        version: # auto
+        path: '{{ local_builds_path }}/DBConverter'
+    redist_builds:
+        version: # auto
+        path: '{{ local_builds_path }}/Redist'
+logs_path: &logs
+    LOGS_PATH: '{{ home_path }}/logs'
+common_config: &base
+    <<: *logs
+    PRIMARY_TENANT: '{{ tenant }}'
+    CONNECTION_STRING: 'Server={{ groups['rx_db'][0] }}; Database=DirectumRX; User ID={{ admnPostgres }}; Password={{ PasswordPostgres }}; Port=5432; Integrated Security=False; Timeout=30; Encoding=UTF8'
+    QUEUE_CONNECTION_STRING: 'userName={{userRabbit}};password={{userPassword}};hostname={{ groups['services'][0] }};port=5672;virtualhost={{ VHOST }};exchange=RxExchange'
+    DATABASE_ENGINE: 'postgres'
+    DATA_PROTECTION_CERTIFICATE_FILE: '{{ home_path }}/data_protection/cert.pfx'
+    DATA_PROTECTION_CERTIFICATE_FILE_PASSWORD: '11111'
+    WEB_HOST_PATH_BASE: 'Client'
+    AUTHENTICATION_USERNAME: 'Service User'
+    AUTHENTICATION_PASSWORD: '{{ AuthPassword }}'
+    HYPERLINK_SERVER: 'https://{{ host_fqdn }}/Sungero'
+    MONGODB_CONNECTION_STRING: 'mongodb://{{ admnMongo }}:{{ passwordMongo }}@{{ groups['services'][0] }}:27019'
+    LANGUAGE: 'ru-RU'
+    LOG_LANGUAGE: 'ru-RU'
+    ENABLE_SCALING: 'true'
+    REDIS_HOST: '{{ groups['services'][0] }}'
+    REDIS_PORT: '6379'
+services_config:
+    SungeroWebServer: &SungeroWebServer
+        <<: *base
+        WEB_HOST_HTTP_PORT: # auto
+        PREVIEW_ENABLED: 'true'
+        PREVIEW_RELATIVE_PATH: '/Preview/'
+        CENTRIFUGO_RELATIVE_PATH: '/Centrifugo/'
+    SungeroWebClient:
+        <<: *SungeroWebServer
+        WEB_HOST_HTTP_PORT: # auto
+        ENABLE_SCALING: 'true'
+        REDIS_HOST: '{{ groups['services'][0] }}'
+        REDIS_PORT: '6379'
+#    StorageService:
+#        <<: *base
+#        PORT: # auto
+#        STORAGE_PATH: '{{ home_path }}/storageservice'
+#        ENABLE_SCALING: 'true'
+#        REDIS_HOST: '{{ groups['webapp1'][0] }}'
+#        REDIS_PORT: '6379'
+    PreviewService:
+        <<: *base
+        PREVIEW_STORAGE_HOST: # auto
+        TEMP_CONVERSION_FOLDER: '{{ home_path }}/previewservice/conversionresults'
+        DOCUMENT_PROVIDER_CACHE_FOLDER: '{{ home_path }}/previewservice/sourcedocuments'
+        ENABLE_SCALING: 'true'
+        REDIS_HOST: '{{ groups['services'][0] }}'
+        REDIS_PORT: '6379'
+    PreviewStorage:
+        <<: *base
+        DEFAULT_SERVICE_PORT: # auto
+        STORAGE_PATH: '{{ home_path }}/previewstorage'
+        ENABLE_SCALING: 'true'
+        REDIS_HOST: '{{ groups['services'][0] }}'
+        REDIS_PORT: '6379'
+    WorkflowProcessService:
+        <<: *base
+    DelayedOperationsService:
+        <<: *base
+    JobScheduler:
+        <<: *base
+    GenericService:
+        <<: *base
+        WORKER_SERVICE_ENABLED: true
+        WORKFLOW_BLOCK_SERVICE_ENABLED: true
+        REPORT_SERVICE_ENABLED: true
+        WIDGET_SERVICE_ENABLED: true
+
+    ClientsConnectionService:
+        <<: *base
+        QUEUE_RESPONSE_TIMEOUT: '00:00:30'
+        SERVICE_PORT: # auto
+        CENTRIFUGO_API_URI: # auto
+        CENTRIFUGO_API_KEY: '1Qwerty'
+    SungeroCentrifugo:
+        'v3_use_offset': true
+        'api_key': '1Qwerty'
+        'port': # auto
+        'proxy_connect_endpoint': #auto
+        'proxy_connect_timeout': 5
+        'user_subscribe_to_personal': true
+        # Секрет для генерации токенов
+        #'admin_secret': ''
+    IntegrationService:
+        <<: *base
+        WEB_HOST_HTTP_PORT: # auto
+    LogService:
+        <<: *base
+        PORT: # auto
+    SungeroHaproxy:
+        haproxy_config: '{{ home_path }}/haproxy/haproxy.cfg'
+        http_port: '{{ http_port }}'
+        https_port: '{{ https_port }}'
+    ServiceRunner:
+        <<: *logs
+        CONFIGS_PATH:  # auto
+        PACKAGES_ZIP_PATH: # auto
+        PACKAGES_BIN_PATH: # auto
+        SERVICE_RUNNER_PORT: # auto
+    SungeroMongodb:
+        mongodb_data_path: '{{ home_path }}/mongodb_data'
+        user: '{{ admnMongo }}'
+        password: '{{ passwordMongo }}'
+        port: 27019
+    DeploymentTool:
+        <<: *base
+        WEB_RELATIVE_PATH: 'Client'
+        SERVER_HTTPS_PORT: '{{ https_port }}'
+        SERVER_HTTP_PORT: '{{ http_port }}'
+        SERVER_ROOT: '{{ groups['webapp1'][0] }}'
+        WEB_PROTOCOL: '{{ protocol }}'
+    RxCmd:
+        <<: *logs
+        INTEGRATION_SERVICE_URL: # auto

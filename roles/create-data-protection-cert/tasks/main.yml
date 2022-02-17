@@ -1,0 +1,31 @@
+- name: generate data protection cert from config
+  shell: bash /home/build/do.sh generate_data_protection_cert_from_config
+
+- name: cp cert to webapp2
+  synchronize:
+    src: /home/directum/data_protection/cert.cer
+    dest: /home/directum/data_protection/cert.cer
+    mode: pull
+  delegate_to: "{{ groups['webapp2'][0] }}"
+
+- name: cp cert to webapp2
+  synchronize:
+    src: /home/directum/data_protection/cert.pfx
+    dest: /home/directum/data_protection/cert.pfx
+    mode: pull
+  delegate_to: "{{ groups['webapp2'][0] }}"
+
+
+- name: cp cert to storage
+  synchronize:
+    src: /home/directum/data_protection/cert.cer
+    dest: /home/directum/data_protection/cert.cer
+    mode: pull
+  delegate_to: "{{ groups['storage'][0] }}"
+
+- name: cp cert to storage
+  synchronize:
+    src: /home/directum/data_protection/cert.pfx
+    dest: /home/directum/data_protection/cert.pfx
+    mode: pull
+  delegate_to: "{{ groups['storage'][0] }}"

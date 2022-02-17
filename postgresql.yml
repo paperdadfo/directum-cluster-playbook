@@ -1,0 +1,75 @@
+- name: Postgresql Install
+  hosts: rx_db
+  become: yes
+
+  tasks:
+
+   - name: Install python3 and other lib
+     apt:
+      name: python3-pip
+     loop:
+      - "libpq"
+#      - "python-psycopg2"
+
+   - name: Install Python packages
+     pip:
+      name: psycopg2
+
+   - name: Allow all access to port 53
+     community.general.ufw:
+       rule: allow
+       port: '5432'
+
+   - name: refresh pg_hba
+     lineinfile: dest=/etc/postgresql/11/main/pg_hba.conf regexp="^hosts+alls+all+127.0.0.1/32s+md5$" insertafter="^#sIPv4slocal.+" line="host    all             all  192.168.1.0/24            trust"
+
+   - name: refresh postgresql.conf
+     lineinfile: dest=/etc/postgresql/11/main/postgresql.conf regexp="^#+Add+settings+for+extensions+here$" insertafter="^#sIPv4slocal.+" line="listen_addresses = '*'"
+
+   - name: restart PostgreSQL
+     service:
+       name: postgresql
+       state: restarted
+
+- name: TEST
+  hosts: rx_db
+  become: yes
+
+  tasks:
+
+   - name: install setfacl support
+     become: yes
+     apt: pkg=acl
+
+   - name: Create User
+     become_user: postgres
+     postgresql_user:
+      name: sa
+      password: 1Qwerty
+      role_attr_flags: SUPERUSER,LOGIN
+
+#   - name: apt update
+#     apt: update_cache=yes cache_valid_time=3600
+#
+#   - name: install
+#     apt:
+#       name: wget
+#       state: latest
+#
+#   - name: Add PostgreSQl key
+#     apt_key:
+#      url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+#      state: present
+#
+#   - name: Add PostgreSQL APT repository
+#     apt_repository:
+#      repo: deb http://apt.postgresql.org/pub/repos/apt focal-pgdg main
+#
+#   - name: apt update
+#     apt: update_cache=yes cache_valid_time=3600
+#
+#   - name: Install PostgreSQL 11 & contrib
+#     apt:
+#      name: postgresql-11
+#     loop:
+#      - "postgresql-contrib"
