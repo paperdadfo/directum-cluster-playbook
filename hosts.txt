@@ -1,31 +1,42 @@
-
+# 1 плечо сервера приложений
 [webapp1]
 10.0.10.10
 
+# 2-е плечо сервера приложений
 [webapp2]
 10.0.10.11
 
+# просто группа плеч для удобства использования
 [WEB_APP:children]
 webapp1
 webapp2
 
+# адрес сервера хранилищ
 [storage]
 10.0.10.12
 
+# сервер с RabbitMQ Mongo Redis
 [services]
 10.0.10.17
 
+# HAProxy 
 [balancer]
 10.0.10.9
 
+# Сервер СУБД
 [rx_db]
 10.0.10.16
 
+#Для удобства 
 [DRX:children]
 webapp1
 webapp2
 storage
 services
+
+# данные для подключения по SSH,
+# Важно чтоб данные для входа везде 
+# были одинаковые на момент установки
 
 [all:vars]
 ansible_connection='ssh'
@@ -42,26 +53,33 @@ https_port='443'
 tar_gz_archive='/path/to/DirectumLauncher.tar.gz'
 
 #**************************************************#
-# Где будет расположено хранилище файлов
+# Где будет расположено хранилище файлов на сервере storage,
+# путь желательно не менять, в случае использования сетевой шары
+# примонтируйте ее сначала, перед разворачиваинем системы
+
 storage_path='/home/storage/'
 
-# PLZ DONT CHANGE THIS VAR
+# пожалуйста, не меняйте эти значения, просто потому-что так надо
 directum_installer='/home/build'
 home_path='/home/directum'
 local_builds_path='./etc/_builds'
 directum_config='/home/directum/etc/config.yml'
-#**************************************************#
+#*****************RabbitMQ*********************#
 #
 userRabbit='RxUser'
 userPassword='1Qwerty'
+
 admnRabbit='RxAdmin'
 admnPassword='7gren9234mjgm'
 VHOST='RxHost'
 
-
+#**********************************************#
+#*************PostgreSQL***********************#
 admnPostgres='sa'
 PasswordPostgres='1Qwerty'
 
+#**********************************************#
+#***************MongoDB************************#
 admnMongo='test'
 passwordMongo='1Qwerty'
 
