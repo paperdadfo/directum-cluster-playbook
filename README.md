@@ -16,6 +16,7 @@ test.rx.compony.name -> [balancer]
 Протестирована работа на машине с:
 
 python version = 3.10
+
 ansible [core 2.12.2]
 
 
