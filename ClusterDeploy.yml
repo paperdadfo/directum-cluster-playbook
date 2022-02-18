@@ -33,10 +33,12 @@
   roles:
 
     - role: postgresql-install
-#    - role: postgresql-create-user
     - role: postgresql-config
 
   tasks:
+
+# В: Почему не создана роль на создание пользователя? 
+# О: Роль с содержанием этой таске отрабатывается некоретно из за python 3.5 на астре
 
   - name: install setfacl support
     become: yes
@@ -142,8 +144,8 @@
 
   - name: generate SQL
     template:
-      src: changestorage.sql.j2  # потом надо заменить на нормальное что-то
-      dest: "/home/{{ansible_user}}/changestorage.sql"  # заменить
+      src: changestorage.sql.j2
+      dest: "/home/{{ansible_user}}/changestorage.sql"
       mode: 0777
 
   - name: UpdateStorage
@@ -173,18 +175,5 @@
   - name: start nodes
     shell: bash /home/build/do.sh all up
 
-  - name: DirectumRX cluster post-install info
-    run_once: true
-    debug:
-      msg:
-        - +------------------------------------------------+
-        - URL to connect "https://{{ host_fqdn }}/Client"
-        - HaProxy balancer {{ cluster_vip }}
-        - WebApp1 {{ groups['webapp1'][0] }}
-        - WebApp2 {{ groups['Webapp2'][0] }}
-        - Postgresql {{ groups['rx_db'][0] }}
-        - Storage {{ haproxy_listen_port.replicas_async }}
-        - Auth.User - Administrator Auth.Password - {{ AuthPassword }}
-        - +------------------------------------------------+
 ...
 
