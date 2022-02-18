@@ -12,8 +12,6 @@ defaults
     option redispatch
     option httplog
     default-server init-addr last,libc,none
-#    default-server check inter 10s resolvers docker_resolver
-    # default-server ssl verify required ca-file /etc/ssl/certs/ca-certificates.crt
     retries 3
     maxconn 4000
 
@@ -27,7 +25,6 @@ frontend directumrx
     default_backend rx-nodes
 
 backend storageservice_backend
-#    http-request set-path "%[path,regsub(^/Storage/,/,i)]"
     server storageservice_server {{ groups['storage'][0] }}:80
 
 backend rx-nodes
