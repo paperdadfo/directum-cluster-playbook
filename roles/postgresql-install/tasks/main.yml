@@ -31,8 +31,13 @@
   apt_repository:
     repo: deb https://mirror.yandex.ru/debian/ stretch main contrib non-free
 
+# Если все, что было сверху вас не смутило, то сейчас вы увидите то
+# чего в природе быть не должно, но имеет место быть
+
 - name: Add PostgreSQL APT repository
   shell: sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ stretch-pgdg main" >> /etc/apt/sources.list'
+
+# --no-check используется потому-что так надо
 
 - name: Add PostgreSQl key
   shell: wget --no-check-certificate https://www.postgresql.org/media/keys/ACCC4CF8.asc -O - | sudo apt-key add -

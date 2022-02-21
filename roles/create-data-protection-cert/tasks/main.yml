@@ -1,3 +1,5 @@
+# Почему отдельная роль а не таска? Да потому-что не надо
+# из плейбука делать стену плача
 - name: generate data protection cert from config
   shell: bash /home/build/do.sh generate_data_protection_cert_from_config
 
