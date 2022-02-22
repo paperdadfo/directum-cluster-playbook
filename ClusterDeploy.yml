@@ -1,21 +1,23 @@
 ---
 - name: add debian stretch repo
-  hosts: all
-  become: yes
+  hosts: all  # где выполняется
+  become: yes # это эскалация прав доступа, если не указан метод и юзер по дефолту юзается sudo
 
   tasks:
 # вот тут если вынести это в роль, возникают непонятные ошибки,
 # в связи с этим, пришлось вынести в отдельную таску
   - name: install debian-archive-keyring dirmngr
-    apt:
-      name: "debian-archive-keyring"
-      update_cache: yes
-    loop:
-      - dirmngr
+    apt: # используем модуль APT
+      name: "debian-archive-keyring" # имя пакета который надо установить, если не указано другое действие
+      update_cache: yes # обновить ли кэш пакетов
+    loop: # повторить
+      - dirmngr # так же будет установлен
 
   - name: add repo
-    apt_repository:
-      repo: deb https://mirror.yandex.ru/debian/ stretch main contrib non-free
+    apt_repository: # модуль добавление репозитория
+      repo: deb https://mirror.yandex.ru/debian/ stretch main contrib non-free # репозиторий
+
+# то, что ниже, по сути установка остальных пакетов, необходимых так или иначе
 
   - name: install components
     apt:
@@ -32,6 +34,8 @@
   become: yes
 
   roles:
+
+# тут используются роли, что происходит в ролях можно посмотреть в ./roles/%rolename%
 
     - role: postgresql-install
     - role: postgresql-config
@@ -59,7 +63,10 @@
   roles:
     - role: docker-install
 
+# ниже мы создаем директорию под data_protection сертификат
+
   tasks:
+
   - name: Create data_protection folder
     file:
       path: "{{ home_path }}/data_protection"
@@ -143,11 +150,15 @@
 
   tasks:
 
+# на данном этапе генерируется SQL скрипт из шаблона
+
   - name: generate SQL
     template:
       src: changestorage.sql.j2
       dest: "/home/{{ansible_user}}/changestorage.sql"
       mode: 0777
+
+# тут скрипт выполняется для СУБД, тем самым меняя в БД адрес хранилища
 
   - name: UpdateStorage
     postgresql_query:
